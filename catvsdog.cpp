@@ -5,6 +5,8 @@
 #include <vector>
 #include <cstddef>
 #include <cstring>
+#include <climits>
+#include <queue>
 
 using namespace std;
 
@@ -16,6 +18,7 @@ struct Node{
 
 vector<Node> catVect;
 vector<Node> dogVect;
+vector<Node> vList;
 
 vector<vector<int>> gr(int v, int c, int d, vector<Node> catV, vector<Node> dogV) {
 
@@ -24,82 +27,133 @@ vector<vector<int>> gr(int v, int c, int d, vector<Node> catV, vector<Node> dogV
 	for (int i = 0; i < c; i++){
 		for (int j = 0; j < d; j++){//find which cats and dogs are connectable
 
-			if ((catV[i].dislike == dogV[j].like) || (catV[i].like == dogV[j].dislike)){
-				//vec.push_back(1);
-				//g.push_back(vec);
+			if ((catV[i].dislike == dogV[j].like) or (catV[i].like == dogV[j].dislike)){
 				g[i][j] = 1;	
 			}
 			else{
 
-				//vec.push_back(0);
-				//g.push_back(vec);
 				g[i][j] = 0;
 			}		
 		}
 	}
-
-	for (int i = 0; i < c; i++){
-		for (int j = 0; j < d; j++){
-			cout << g[i][j];
-		}
-		cout << endl;
-	}
-
 	return g;
 }
 
-int minVert(int v, int c, int d, vector<vector<int>> g){
+bool mtc(vector<vector<int>> graph, int u, bool seen[], int mt[], int v, int c, int d){
+                                      	
+    for (int i = 0; i < c; i++)
+    {
+        if (graph[u][i] && !seen[i])
+        {
+            seen[i] = true;
+            if (mt[i] < 0 || mtc(graph, mt[i], seen, mt, v, c, d))
+            {
+                mt[i] = u;
+                return true;
+            }
+        }
+    }
+    return false;
 
-	int connected[] = {0}; 
-	int catConn[] = {0};
-
-	for (int i = 0; i < c; i++){//for number of cats
-		bool connected[] = {false};
-
-		for (int j = 0; j < d; j++){
-			if((g[i][j] == 1) && (connected[i] == false)){//if graph is matchable and cat hasn't been con
-				connected[i] = true;//connected
-				if(catConn[j] == 0 ){//if there is another connection possible consider new connection
-					catConn[j] = 1;
-					return 1;
-
-				}
-			}		
-	
-		}
-
-	}	                                              
-                        	
-    return 0;                                                                                                                                                                              
 }
 
 
-int maxFlow(int v, int c, int d, vector<vector<int>> g){	
-	//maximum matching
+int mx(vector<vector<int>> graph, int v, int s, int t, int c, int d){
 
-	int max = 0;
-	for (int i = 0; i < c; i++){
-		int searched[] = {0};
-		if (minVert(v, c, d, g) == 1){
-			max++;
-
+	int mt[v];
+	//int mt[c];
+	memset(mt, -1, sizeof(mt));
+                         
+    int result = 0;
+    for (int u = 0; u < c; u++)
+    {
+    	bool seen[v];
+    	memset(seen, 0, sizeof(seen));
+                                  
+    	if (mtc(graph, u, seen, mt, v, c, d)){                                               
+			result++;
+			//cout << u << endl;	
 		}
+		else{
+			//cout << "outside: " << u << endl;
+		}
+	}
 
-	}               
-	return max;                                                                                                         
+	string first;
+	for (int i = 0; i < v; i++){
+		if(mt[i] < 0){
+			first = vList[i].like;
+			cerr << "Keeping " << first << endl;
+			break;
+		}
+	}
+	for(int i = 0; i < v; i++){
+		if((mt[i] < 0)){
+			cerr <<"Happy Person: +"<< vList[i].like << ", -" << vList[i].dislike << endl;
+		}
+	}
+
+	printf("-------------------------\n");
+	int i = 0;
+	while(i!=v){
+		if(vList[i].dislike != first){
+			cerr <<"Happy Person: +"<< vList[i].like << ", -" << vList[i].dislike << endl;
+		}
+		i++;
+	}
+                                           
+    return result;
 }
 
+/*
+bool match(int curr, vector<vector<int>>& adj, vector<int>& l, vector<int>& r, vector<int>& vis) {
+    if(vis[curr]) return false;
+    vis[curr] = true;
+
+    for(auto next : adj[curr]) {
+        if(r[next] == -1 || match(r[next], adj, l, r, vis)) {
+            l[curr] = next;
+            r[next] = curr;
+            return true;
+        }
+    }
+    return false;
+}
+
+int bipartite(vector<vector<int>>& adj, int n, int m) {
+    vector<int> l, r, vis;
+    l.resize(n, -1);
+    r.resize(m, -1);
+    vis.resize(n);
+
+    bool works = true;
+    while(works) {
+        works = false;
+        fill(vis.begin(), vis.end(), 0);
+        for(int i = 0; i < n; i++) {
+            if(l[i] == -1) {
+                works |= match(i, adj, l, r, vis);
+            }
+        }
+    }
+    int ret = 0;
+    for(int i = 0; i < n; i++) {
+        ret += (l[i] != -1);
+    }
+    return ret;
+}
+*/
 
 int main() {
-
+	
 	int n, c, d, v;
 	vector<vector<int>> graph;
 
 	string in1, in2;
 	cin >> n;
 
-	vector<Node> catVect;//cat and dog vect to compare in bipartite graph and find which viewers match
-	vector<Node> dogVect;
+//	vector<Node> catVect;//cat and dog vect to compare in bipartite graph and find which viewers match
+//	vector<Node> dogVect;
 
 	for (int i = 0; i < n; i++) {
 		cin >> c >> d >> v;
@@ -108,35 +162,38 @@ int main() {
 			cin >> in1 >> in2;
 
 			if (in1.at(0) == 'C'){
-				//printf("cat-lover\n");
+				
 				Node cat;
 		
 				cat.like = in1;
 				cat.dislike = in2;
 				catVect.push_back(cat);
+				vList.push_back(cat);
 			}
 			else{
-				//printf("dog-lover\n");
 				Node dog;
 
 				dog.like = in1;
 				dog.dislike = in2;
 				dogVect.push_back(dog);
+				vList.push_back(dog);
 			}
-
 		}
 
 		int catSize = catVect.size();
 		int dogSize = dogVect.size();
-
-		graph = gr(v, c, d, catVect, dogVect);
-
-		int ans = maxFlow(v, c, d, graph);	
-		cout << ans << endl;
-
+		int s = 0;
 	
-		//catVect.clear();
-		//dogVect.clear();
+		graph = gr(v, catSize, dogSize, catVect, dogVect);
+		//cout << "new: "<< v - bipartite(graph, catSize, dogSize)-1 << endl;
+
+		int ans1 = mx(graph, v, s, catSize, c, d);
+		//int ans1 = mx(graph, v, s, dogSize, catSize, dogSize);
+	
+		cout << v - ans1 << endl;
+	
+		catVect.clear();
+		dogVect.clear();
 	}
 
 	return 0;
