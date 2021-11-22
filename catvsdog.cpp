@@ -24,7 +24,7 @@ vector<vector<int>> gr(int v, int c, int d, vector<Node> catV, vector<Node> dogV
 	for (int i = 0; i < c; i++){
 		for (int j = 0; j < d; j++){//find which cats and dogs are connectable
 
-			if ((catV[i].dislike == dogV[j].like) or (catV[i].like == dogV[j].dislike)){
+			if ((catV[i].dislike == dogV[j].like) || (catV[i].like == dogV[j].dislike)){
 				//vec.push_back(1);
 				//g.push_back(vec);
 				g[i][j] = 1;	
@@ -50,14 +50,14 @@ vector<vector<int>> gr(int v, int c, int d, vector<Node> catV, vector<Node> dogV
 
 int minVert(int v, int c, int d, vector<vector<int>> g){
 
-	int connected[v] = {0}; 
-	int catConn[v] = {0};
+	int connected[] = {0}; 
+	int catConn[] = {0};
 
 	for (int i = 0; i < c; i++){//for number of cats
-		bool connected[c] = {false};
+		bool connected[] = {false};
 
 		for (int j = 0; j < d; j++){
-			if((g[i][j] == 1) and (connected[i] == false)){//if graph is matchable and cat hasn't been con
+			if((g[i][j] == 1) && (connected[i] == false)){//if graph is matchable and cat hasn't been con
 				connected[i] = true;//connected
 				if(catConn[j] == 0 ){//if there is another connection possible consider new connection
 					catConn[j] = 1;
@@ -79,7 +79,7 @@ int maxFlow(int v, int c, int d, vector<vector<int>> g){
 
 	int max = 0;
 	for (int i = 0; i < c; i++){
-		int searched[d] = {0};
+		int searched[] = {0};
 		if (minVert(v, c, d, g) == 1){
 			max++;
 
