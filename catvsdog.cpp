@@ -39,14 +39,14 @@ vector<vector<int>> gr(int v, int c, int d, vector<Node> catV, vector<Node> dogV
 	return g;
 }
 
-bool mtc(vector<vector<int>> graph, int u, bool seen[], int mt[], int v, int c, int d){
+bool mtc(vector<vector<int>> graph, int u, bool pass[], int mt[], int v, int c, int d){
                                       	
     for (int i = 0; i < c; i++)
     {
-        if (graph[u][i] && !seen[i])
+        if (graph[u][i] && !pass[i])
         {
-            seen[i] = true;
-            if (mt[i] < 0 || mtc(graph, mt[i], seen, mt, v, c, d))
+            pass[i] = true;
+            if (mt[i] < 0 || mtc(graph, mt[i], pass, mt, v, c, d))
             {
                 mt[i] = u;
                 return true;
@@ -67,10 +67,10 @@ int mx(vector<vector<int>> graph, int v, int s, int t, int c, int d){
     int result = 0;
     for (int u = 0; u < c; u++)
     {
-    	bool seen[v];
-    	memset(seen, 0, sizeof(seen));
+    	bool pass[v];
+    	memset(pass, 0, sizeof(pass));
                                   
-    	if (mtc(graph, u, seen, mt, v, c, d)){                                               
+    	if (mtc(graph, u, pass, mt, v, c, d)){                                               
 			result++;
 			//cout << u << endl;	
 		}
@@ -92,57 +92,10 @@ int mx(vector<vector<int>> graph, int v, int s, int t, int c, int d){
 			cerr <<"Happy Person: +"<< vList[i].like << ", -" << vList[i].dislike << endl;
 		}
 	}
-
-	printf("-------------------------\n");
-	int i = 0;
-	while(i!=v){
-		if(vList[i].dislike != first){
-			cerr <<"Happy Person: +"<< vList[i].like << ", -" << vList[i].dislike << endl;
-		}
-		i++;
-	}
                                            
-    return result;
+    return result;  
 }
 
-/*
-bool match(int curr, vector<vector<int>>& adj, vector<int>& l, vector<int>& r, vector<int>& vis) {
-    if(vis[curr]) return false;
-    vis[curr] = true;
-
-    for(auto next : adj[curr]) {
-        if(r[next] == -1 || match(r[next], adj, l, r, vis)) {
-            l[curr] = next;
-            r[next] = curr;
-            return true;
-        }
-    }
-    return false;
-}
-
-int bipartite(vector<vector<int>>& adj, int n, int m) {
-    vector<int> l, r, vis;
-    l.resize(n, -1);
-    r.resize(m, -1);
-    vis.resize(n);
-
-    bool works = true;
-    while(works) {
-        works = false;
-        fill(vis.begin(), vis.end(), 0);
-        for(int i = 0; i < n; i++) {
-            if(l[i] == -1) {
-                works |= match(i, adj, l, r, vis);
-            }
-        }
-    }
-    int ret = 0;
-    for(int i = 0; i < n; i++) {
-        ret += (l[i] != -1);
-    }
-    return ret;
-}
-*/
 
 int main() {
 	
