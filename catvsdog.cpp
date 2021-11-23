@@ -10,144 +10,133 @@
 
 using namespace std;
 
-struct Node{
-	string like;
-	string dislike;
-	//int flow = 1
-	};
+struct Viewer {
+    string viewerLike;
+    string viewerDislike;
+};
 
-vector<Node> catVect;
-vector<Node> dogVect;
-vector<Node> vList;
+vector< vector<int> > generateGraph(int totalVertices, int numberCatLovers, int numberDogLovers, vector<Viewer> catLoversVector, vector<Viewer> dogLoversVector) {
+	
+    vector< vector<int> > graph(totalVertices, vector<int>(totalVertices, 0));
+	
+    for (int i = 0; i < totalVertices; i++) 
+		for (int j = 0; j < totalVertices; j++){
+			// Connecting source vertex to cat lovers vertices
+            if ((j > 0 && j <= numberCatLovers) && i == 0) graph[i][j] = 1;
 
-vector<vector<int>> gr(int v, int c, int d, vector<Node> catV, vector<Node> dogV) {
-
-	vector<vector<int>> g(c, vector<int>(d, 0));
-	vector<int> vec;
-	for (int i = 0; i < c; i++){
-		for (int j = 0; j < d; j++){//find which cats and dogs are connectable
-
-			if ((catV[i].dislike == dogV[j].like) or (catV[i].like == dogV[j].dislike)){
-				g[i][j] = 1;	
-			}
-			else{
-
-				g[i][j] = 0;
-			}		
+            // Connecting dog lovers vertices to sink vertex
+            if ((i > numberCatLovers && i < (totalVertices - 1)) && j == (totalVertices - 1)) graph[i][j] = 1;
+            
+            // Connecting conflicting viewers
+            if (i > 0 && i <= numberCatLovers && (j > numberCatLovers && j < (totalVertices - 1))) 
+                if ((catLoversVector[i - 1].viewerDislike == dogLoversVector[j - numberCatLovers - 1].viewerLike) || (catLoversVector[i - 1].viewerLike == dogLoversVector[j - numberCatLovers - 1].viewerDislike))
+                    graph[i][j] = 1;
 		}
-	}
-	return g;
+    
+	return graph;
 }
 
-bool mtc(vector<vector<int>> graph, int u, bool pass[], int mt[], int v, int c, int d){
-                                      	
-    for (int i = 0; i < c; i++)
-    {
-        if (graph[u][i] && !pass[i])
-        {
-            pass[i] = true;
-            if (mt[i] < 0 || mtc(graph, mt[i], pass, mt, v, c, d))
-            {
-                mt[i] = u;
-                return true;
+
+bool augmentPathExist(vector< vector<int> > residualGraph, int sourceIndex, int sinkIndex, int parent[], int totalVertices) {
+    bool visited[totalVertices];
+    memset(visited, 0, sizeof(visited)); // Initializing visited array to 0
+
+    queue<int> q;
+    q.push(sourceIndex);
+    visited[sourceIndex] = true;
+    parent[sourceIndex] = -1;
+    
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+ 
+        for (int i = 0; i < totalVertices; i++) {
+            if (visited[i] == false && residualGraph[u][i] > 0) {
+                if (i == sinkIndex) {
+                    parent[i] = u;
+                    return true;
+                }
+                q.push(i);
+                parent[i] = u;
+                visited[i] = true;
             }
         }
     }
     return false;
-
 }
+ 
+int getMaxFlow(vector< vector<int> > graph, int sourceIndex, int sinkIndex, int totalVertices) {
+    
+    vector< vector<int> > residualGraph = graph; // Initializing the residual graph to be used in Ford-Fulkerson Algorithm 
+ 
+    int parent[totalVertices]; 
+ 
+    int maxFlow = 0; 
 
+    while (augmentPathExist(residualGraph, sourceIndex, sinkIndex, parent, totalVertices)) {
+        int pathFlow = INT_MAX;
 
-int mx(vector<vector<int>> graph, int v, int s, int t, int c, int d){
+        for (int i = sinkIndex; i != sourceIndex; i = parent[i]) 
+            pathFlow = min(pathFlow, residualGraph[parent[i]][i]);
 
-	int mt[v];
-	//int mt[c];
-	memset(mt, -1, sizeof(mt));
-                         
-    int result = 0;
-    for (int u = 0; u < c; u++)
-    {
-    	bool pass[v];
-    	memset(pass, 0, sizeof(pass));
-                                  
-    	if (mtc(graph, u, pass, mt, v, c, d)){                                               
-			result++;
-			//cout << u << endl;	
-		}
-		else{
-			//cout << "outside: " << u << endl;
-		}
-	}
+        for (int j = sinkIndex; j != sourceIndex; j = parent[j]) {
+            residualGraph[parent[j]][j] -= pathFlow;
+            residualGraph[j][parent[j]] += pathFlow;
+        }
 
-	string first;
-	for (int i = 0; i < v; i++){
-		if(mt[i] < 0){
-			first = vList[i].like;
-			cerr << "Keeping " << first << endl;
-			break;
-		}
-	}
-	for(int i = 0; i < v; i++){
-		if((mt[i] < 0)){
-			cerr <<"Happy Person: +"<< vList[i].like << ", -" << vList[i].dislike << endl;
-		}
-	}
-                                           
-    return result;  
+        maxFlow += pathFlow;
+    }
+
+    return maxFlow;
 }
-
 
 int main() {
+
+    int numberLines, numberCats, numberDogs, numberViewers, totalVertices;
+    int satisfiedViewers = 0;
+    string choice1, choice2;
+    vector<Viewer> catLovers; // Vector containing cat lovers
+    vector<Viewer> dogLovers; // Vector containing dog lovers
+
+    cin >> numberLines;
+
+    for (int i = 0; i < numberLines; i++) {
+        cin >> numberCats >> numberDogs >> numberViewers;
+        totalVertices = numberViewers + 2; // Total number of vertices with the source and sink vertices
+
+        // Checking if the number of cats or dogs are between the correct boundary
+        if (!(1 <= numberCats && numberCats <= 100) || !(1 <= numberDogs && numberDogs <= 100)) return 0;
+        
+        for (int j = 0; j < numberViewers; j++) {
+            cin >> choice1 >> choice2;
+            
+            if (choice1.at(0) == 'C'){
+				Viewer catLover;
+				catLover.viewerLike = choice1;
+				catLover.viewerDislike = choice2;
+				catLovers.push_back(catLover);
+			} else {
+				Viewer dogLover;
+				dogLover.viewerLike = choice1;
+				dogLover.viewerDislike = choice2;
+				dogLovers.push_back(dogLover);
+			}
+        }
+
+        int numberCatLovers = catLovers.size();
+		int numberDogLovers = dogLovers.size();
 	
-	int n, c, d, v;
-	vector<vector<int>> graph;
-
-	string in1, in2;
-	cin >> n;
-
-//	vector<Node> catVect;//cat and dog vect to compare in bipartite graph and find which viewers match
-//	vector<Node> dogVect;
-
-	for (int i = 0; i < n; i++) {
-		cin >> c >> d >> v;
-	
-		for (int j = 0; j < v; j++) {
-			cin >> in1 >> in2;
-
-			if (in1.at(0) == 'C'){
-				
-				Node cat;
+		vector< vector<int> > graph = generateGraph(totalVertices, numberCatLovers, numberDogLovers, catLovers, dogLovers);
 		
-				cat.like = in1;
-				cat.dislike = in2;
-				catVect.push_back(cat);
-				vList.push_back(cat);
-			}
-			else{
-				Node dog;
-
-				dog.like = in1;
-				dog.dislike = in2;
-				dogVect.push_back(dog);
-				vList.push_back(dog);
-			}
-		}
-
-		int catSize = catVect.size();
-		int dogSize = dogVect.size();
-		int s = 0;
+        int sourceIndex = 0;
+        int sinkIndex = (totalVertices - 1);
+		int maxFlow = getMaxFlow(graph, sourceIndex, sinkIndex, totalVertices); 
 	
-		graph = gr(v, catSize, dogSize, catVect, dogVect);
-		//cout << "new: "<< v - bipartite(graph, catSize, dogSize)-1 << endl;
-
-		int ans1 = mx(graph, v, s, catSize, c, d);
-		//int ans1 = mx(graph, v, s, dogSize, catSize, dogSize);
+		cout << numberViewers - maxFlow << endl; 
 	
-		cout << v - ans1 << endl;
-	
-		catVect.clear();
-		dogVect.clear();
-	}
+		catLovers.clear();
+		dogLovers.clear();
+    }
 
-	return 0;
+    return 0;
 }
